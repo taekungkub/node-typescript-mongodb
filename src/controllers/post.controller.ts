@@ -50,13 +50,14 @@ export const getPostDetail = async (req: Request, res: Response) => {
 
 export const createPost = async (req: Request, res: Response) => {
   try {
-    const { title, description, content, user_id } = req.body;
+    const { _id } = req.user as UserTy;
+    const { title, description, content } = req.body;
 
     const post = await createMyPost({
       title: title,
       description: description,
       content: content,
-      user: user_id,
+      user: _id,
     });
 
     return res.json(successResponse(post));
@@ -67,20 +68,24 @@ export const createPost = async (req: Request, res: Response) => {
 
 export const addLikeToPost = async (req: Request, res: Response) => {
   try {
+    const user = req.user as UserTy;
+
     const { postId } = req.params;
 
-    const { user_id } = req.body;
-
     if (!postId) {
-      throw new Error("postId is required");
+      throw new Error("PostId is required");
     }
 
-    if (!user_id) {
-      throw new Error("user is required");
+    const postExist = await PostModel.findOne({ _id: postId });
+
+    if (!postExist) {
+      throw new Error("Post not found");
     }
 
-    const newLike = await LikeModel.create({ user_id, post: postId });
-    await PostModel.findByIdAndUpdate(postId, { $push: { likes: newLike._id }, $inc: { likeCount: +1 } });
+    const newLike = await LikeModel.create({ user: user._id, post: postId });
+
+    await PostModel.findByIdAndUpdate(postId, { $push: { likes: newLike._id } });
+
     return res.json(successResponse({ id: postId }));
   } catch (error) {
     return res.json(errorResponse(404, ERRORS.TYPE.SERVER_ERROR, error.message));
@@ -91,21 +96,37 @@ export const deleteLikeFromPost = async (req: Request, res: Response) => {
   try {
     const { postId } = req.params;
 
-    const { like_id } = req.body;
+    const user = req.user as UserTy;
 
     if (!postId) {
-      throw new Error("postId is required");
+      throw new Error("PostId is required");
     }
 
-    if (!like_id) {
-      throw new Error("likeId is required");
+    const postExist = await PostModel.findOne({ _id: postId });
+
+    if (!postExist) {
+      throw new Error("Post not found");
     }
 
-    // Remove the like from the LikeModel
-    await LikeModel.findByIdAndDelete(like_id);
+    const post = await PostModel.findById(postId)
+      .populate("user")
+      .populate({
+        path: "likes",
+        populate: {
+          path: "user",
+        },
+      });
 
-    // Remove the likeId from the likes array in the PostModel
-    await PostModel.findByIdAndUpdate(postId, { $pull: { likes: like_id }, $inc: { likeCount: -1 } });
+    const userLikeIndex = post.likes.findIndex((like) => like.user._id.toString() === user._id.toString());
+
+    if (userLikeIndex != -1) {
+      await LikeModel.findOneAndRemove({ user: user._id.toString() });
+
+      post.likes.splice(userLikeIndex, 1);
+      await post.save();
+
+      return res.json(successResponse({ id: postId }));
+    }
 
     return res.json(successResponse({ id: postId }));
   } catch (error) {

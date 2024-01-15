@@ -3,9 +3,7 @@ import * as dotenv from "dotenv";
 
 dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
-const MongoURI =
-  process.env.MONGODB_URL ||
-  "mongodb://127.0.0.1:27017/my-first-db?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+2.1.0";
+const MongoURI = process.env.MONGODB_URL || "mongodb://127.0.0.1:27018/ecommerce";
 
 mongoose.set("strictQuery", false);
 mongoose.Promise = Promise;

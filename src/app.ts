@@ -6,7 +6,6 @@ import * as dotenv from "dotenv";
 import cors from "cors";
 import passport from "passport";
 import swaggerUi from "swagger-ui-express";
-import swaggerJsdoc from "swagger-jsdoc";
 
 import indexRoutes from "./routes/index";
 import authRoute from "./routes/auth.route";

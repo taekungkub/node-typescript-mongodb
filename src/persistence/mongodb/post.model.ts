@@ -9,7 +9,7 @@ const PostSchema = new mongoose.Schema<PostTy>(
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comment" }],
     likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "Like" }],
-    likeCount: { type: Number, default: 0 },
+    total_like: { type: Number, default: 0 },
   },
   { collection: "post", timestamps: true }
 );
@@ -34,7 +34,9 @@ export const getPostById = (id: string) =>
       },
     });
 
-export const createMyPost = (values: Partial<PostTy>) =>
-  new PostModel(values).save().then((post) => PostModel.populate(post, { path: "user" }));
+// export const createMyPost = (values: Partial<PostTy>) =>
+//   new PostModel(values).save().then((post) => PostModel.populate(post, { path: "user" }));
+
+export const createMyPost = (values: Partial<PostTy>) => new PostModel(values).save().then((post) => post.toObject());
 
 export const updatePostById = (id: string, likePostId: string) => PostModel.findByIdAndUpdate(id, { $push: { likes: likePostId } });

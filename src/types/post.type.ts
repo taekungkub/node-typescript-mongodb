@@ -6,9 +6,9 @@ export interface PostTy {
   _id?: string;
   title: string;
   description: string;
-  user: UserTy;
+  user: string | UserTy;
   content: string;
   comments?: CommentTy[];
-  likeCount?: number;
+  total_like?: number;
   likes?: LikeTy[];
 }
